@@ -9,7 +9,15 @@ LOG = logging.getLogger(__name__)
 
 
 class TaskScheduler:
-    def __init__(self, num_workers) -> None:
+    def __init__(self, num_workers: int) -> None:
+        if num_workers <= 0:
+            LOG.error(
+                "Attempted to initialize TaskScheduler with %d workers!", num_workers
+            )
+            raise ValueError(
+                f"Number of worker threads must be greater than 0, but got {num_workers}!"
+            )
+
         self._num_workers = num_workers
         self._workers = []
         self._tasks = Queue()
@@ -26,7 +34,7 @@ class TaskScheduler:
         exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
         exc_traceback: Optional[TracebackType],
-    ):
+    ) -> None:
         self.wait_for_all_tasks_to_complete()
         LOG.info("Exiting TaskScheduler context...")
 
@@ -54,7 +62,6 @@ class TaskScheduler:
             LOG.info("Thread polling...")
 
             with self._cv:
-
                 while not self._stop and self.empty():
                     self._cv.wait()
 
