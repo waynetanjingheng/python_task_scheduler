@@ -2,7 +2,7 @@ import logging
 from queue import Queue
 from typing import Self, Optional, Type
 from types import TracebackType
-from src.tasks.task import Task
+from src.tasks import Task
 import threading
 
 LOG = logging.getLogger(__name__)
@@ -49,12 +49,12 @@ class TaskScheduler:
     def enqueue_task(self, task: Task) -> None:
         with self._cv:
             self._tasks.put(task)
-            LOG.info("Task with id: %d enqueued.", task.get_id())
+            LOG.info("Task with id: [%d] enqueued.", task.get_id())
             self._cv.notify()
 
     def get_next(self) -> Task:
         task = self._tasks.get()
-        LOG.info("Task with id: %d popped.", task.get_id())
+        LOG.info("Task with id: [%d] popped.", task.get_id())
         return task
 
     def execute_tasks(self) -> None:
@@ -91,3 +91,9 @@ class TaskScheduler:
 
     def get_waiting_task_count(self) -> int:
         return self._tasks.qsize()
+
+    def get_num_workers(self) -> int:
+        return self._num_workers
+
+    def get_worker_count(self) -> int:
+        return len(self._workers)
