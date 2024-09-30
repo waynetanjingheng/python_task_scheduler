@@ -1,9 +1,9 @@
 import logging
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(name)s: %(message)s")
 handler.setFormatter(formatter)
-logger.addHandler(handler)
+LOG.addHandler(handler)
