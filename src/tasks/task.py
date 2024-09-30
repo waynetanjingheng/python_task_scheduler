@@ -15,8 +15,8 @@ class Task:
     def execute(self) -> None:
         if self._task is None:
             raise ValueError(
-                f"Task with id: [{self.id}] cannot be executed because it's task is None!"
+                f"Task with id: [{self._id}] cannot be executed because it's task is None!"
             )
 
-        LOG.info(f"Executing Task with id: [{self.id}]")
-        self._task()
+        LOG.info(f"Executing Task with id: [{self._id}]")
+        self._task(self._id)

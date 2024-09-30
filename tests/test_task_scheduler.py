@@ -1,0 +1,54 @@
+import pytest
+from src.scheduler import TaskScheduler
+from src.tasks import Task
+from tests.mock import (
+    mock_task_quick,
+    mock_task_with_computation,
+    mock_task_with_contrived_error,
+    mock_task_with_random_sleep_duration,
+)
+
+MUST_BE_GREATER_THAN_ZERO = "must be greater than 0"
+
+
+def test_initialize_with_valid_workers():
+    with TaskScheduler(num_workers=3) as scheduler:
+        assert scheduler.get_num_workers() == 3
+        assert scheduler.get_worker_count() == 3
+
+
+def test_initialize_with_zero_workers():
+    with pytest.raises(ValueError, match=MUST_BE_GREATER_THAN_ZERO):
+        with TaskScheduler(num_workers=0):
+            pass
+
+
+def test_initialize_with_negative_workers():
+    with pytest.raises(ValueError, match=MUST_BE_GREATER_THAN_ZERO):
+        with TaskScheduler(num_workers=-1):
+            pass
+
+
+def test_enqueue_task():
+    with TaskScheduler(num_workers=3) as scheduler:
+        mock_task = Task(id=1, task=mock_task_quick)
+        scheduler.enqueue_task(mock_task)
+
+        assert scheduler.get_waiting_task_count() == 1
+
+
+@pytest.mark.parametrize("num_test_workers", list(range(1, 6)))
+def test_multiple_task_executions(num_test_workers: int):
+    with TaskScheduler(num_workers=num_test_workers) as scheduler:
+        mock_tasks = [
+            Task(id=1, task=mock_task_quick),
+            Task(id=2, task=mock_task_with_computation),
+            Task(id=3, task=mock_task_with_contrived_error),
+            Task(id=4, task=mock_task_with_random_sleep_duration),
+        ]
+
+        for mock_task in mock_tasks:
+            scheduler.enqueue_task(mock_task)
+
+        scheduler.wait_for_all_tasks_to_complete()
+        assert scheduler.empty()
