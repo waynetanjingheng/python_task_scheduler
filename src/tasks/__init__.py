@@ -1,1 +1,3 @@
-from .task import *
+from .tasks import Task, PriorityTask
+
+__all__ = ["Task", "PriorityTask"]

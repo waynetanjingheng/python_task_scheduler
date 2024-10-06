@@ -1,6 +1,6 @@
 import logging
 from queue import Queue
-from typing import Self, Optional, Type
+from typing import Self, Optional, Type, List
 from types import TracebackType
 from src.tasks import Task
 import threading
@@ -9,7 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class TaskScheduler:
-    def __init__(self, num_workers: int) -> None:
+    def __init__(self, num_workers: int, tasks: Optional[List[Task]] = None) -> None:
         if num_workers <= 0:
             LOG.error(
                 "Attempted to initialize TaskScheduler with %d workers!", num_workers
@@ -23,6 +23,10 @@ class TaskScheduler:
         self._tasks = Queue()
         self._stop = False
         self._cv = threading.Condition()
+
+        if tasks:
+            for task in tasks:
+                self.enqueue_task(task)
 
     def __enter__(self) -> Self:
         LOG.info("Entering TaskScheduler context...")
