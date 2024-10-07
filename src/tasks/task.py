@@ -1,6 +1,6 @@
 from typing import Callable
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from src.mixins import PriorityMixin
 
 
@@ -39,3 +39,42 @@ class PriorityTask(PriorityMixin, Task):
             self.priority,
             self.id,
         )
+
+
+@dataclass
+class PausableTask(Task):
+    gen: iter
+    n: int
+    running: bool = field(default=False)
+
+    def __post_init__(self) -> None:
+        LOG.info(
+            "PausableTask created with n: [%d] and id: [%d]",
+            self.n,
+            self.id,
+        )
+
+    def get_running(self) -> bool:
+        return self.running
+
+    def completed(self) -> bool:
+        return self.n == 0
+
+    def execute(self) -> None:
+        self.running = True
+
+        while self.running and self.n > 0:
+            next(self.gen)
+            self.n -= 1
+
+        if not self.running:
+            LOG.info(
+                "Execution paused in PausableTask with id: [%d]! self.n is: [%d]",
+                self.id,
+                self.n,
+            )
+        else:
+            LOG.info("PausableTask with id: [%d] ended!", self.id)
+
+    def pause(self) -> None:
+        self.running = False
