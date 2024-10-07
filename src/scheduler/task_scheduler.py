@@ -137,3 +137,43 @@ class PriorityTaskScheduler(BaseTaskScheduler):
     def __init__(self, num_workers: int, tasks: Optional[List[Task]] = None) -> None:
         self._tasks = PriorityQueue()
         super().__init__(num_workers=num_workers, tasks=tasks)
+
+
+class RoundRobinTaskScheduler(FIFOTaskScheduler):
+    def __init__(
+        self,
+        num_workers: int,
+        tasks: Optional[List[Task]] = None,
+        time_quantum_ms: int = 20,
+    ) -> None:
+        self.time_quantum = time_quantum_ms / 1000
+        super().__init__(num_workers=num_workers, tasks=tasks)
+
+    def _pause_task(self, task: Task) -> None:
+        if not task.completed():
+            LOG.info("Task with id: [%d] pausing due to time quantum.", task.get_id())
+            task.pause()
+            self.schedule(task)
+
+    def execute(self) -> None:
+        while True:
+            LOG.info("Thread polling...")
+
+            with self._cv:
+                while not self._stop and self.empty():
+                    self._cv.wait()
+
+                if self._stop and self.empty():
+                    LOG.info("Thread has finished polling.")
+                    return
+
+                task = self._pop()
+
+                timer = threading.Timer(
+                    interval=self.time_quantum,
+                    function=self._pause_task,
+                    args=(task,),
+                )
+                timer.start()
+                task.execute()
+                self._tasks.task_done()

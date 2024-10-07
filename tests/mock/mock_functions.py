@@ -76,3 +76,11 @@ def mock_task_quick(task_id: int) -> None:
 
     time.sleep(0.1)  # Sleep for 100 milliseconds
     LOG.info("Quick Task with id: [%d] completed quick execution.", task_id)
+
+
+def fibonacci():
+    """Generator that yields an infinite sequence of Fibonacci numbers."""
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b

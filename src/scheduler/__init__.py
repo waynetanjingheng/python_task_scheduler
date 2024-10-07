@@ -1,3 +1,11 @@
-from .task_scheduler import FIFOTaskScheduler, PriorityTaskScheduler
+from .task_scheduler import (
+    FIFOTaskScheduler,
+    PriorityTaskScheduler,
+    RoundRobinTaskScheduler,
+)
 
-__all__ = ["FIFOTaskScheduler", "PriorityTaskScheduler"]
+__all__ = [
+    "FIFOTaskScheduler",
+    "PriorityTaskScheduler",
+    "RoundRobinTaskScheduler",
+]
