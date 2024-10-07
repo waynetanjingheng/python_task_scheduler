@@ -1,5 +1,5 @@
 from src.tasks import Task
-from .mock_functions import (
+from tests.mock.mock_functions import (
     mock_task_with_random_sleep_duration,
     mock_task_with_computation,
     mock_task_with_contrived_error,
