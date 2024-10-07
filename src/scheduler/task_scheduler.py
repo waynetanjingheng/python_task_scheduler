@@ -1,14 +1,15 @@
 import logging
-from queue import Queue
+from queue import Queue, PriorityQueue
 from typing import Self, Optional, Type, List
 from types import TracebackType
 from src.tasks import Task
 import threading
+from abc import ABC
 
 LOG = logging.getLogger(__name__)
 
 
-class TaskScheduler:
+class BaseTaskScheduler(ABC):
     def __init__(self, num_workers: int, tasks: Optional[List[Task]] = None) -> None:
         if num_workers <= 0:
             LOG.error(
@@ -20,7 +21,6 @@ class TaskScheduler:
 
         self._num_workers = num_workers
         self._workers = []
-        self._tasks = Queue()
         self._stop = False
         self._cv = threading.Condition()
 
@@ -39,8 +39,10 @@ class TaskScheduler:
         exc_value: Optional[BaseException],
         exc_traceback: Optional[TracebackType],
     ) -> None:
-        self.wait_for_all_tasks_to_complete()
+        self.stop()
         LOG.info("Exiting TaskScheduler context...")
+
+    # ========== Public APIs ==========
 
     def start(self) -> None:
         for _ in range(self._num_workers):
@@ -50,16 +52,24 @@ class TaskScheduler:
 
         LOG.info("%d worker threads initialized.", self._num_workers)
 
+    def stop(self) -> None:
+        LOG.info("Waiting for all tasks to complete...")
+
+        with self._cv:
+            self._stop = True
+            self._cv.notify_all()
+
+        self._tasks.join()
+
+        for worker in self._workers:
+            if worker.is_alive():
+                worker.join()
+
     def schedule(self, task: Task) -> None:
         with self._cv:
             self._tasks.put(task)
             LOG.info("Task with id: [%d] enqueued.", task.get_id())
             self._cv.notify()
-
-    def get_next(self) -> Task:
-        task = self._tasks.get()
-        LOG.info("Task with id: [%d] popped.", task.get_id())
-        return task
 
     def execute(self) -> None:
         while True:
@@ -73,22 +83,9 @@ class TaskScheduler:
                     LOG.info("Thread has finished polling.")
                     return
 
-                task = self.get_next()
+                task = self._get()
                 task.execute()
                 self._tasks.task_done()
-
-    def wait_for_all_tasks_to_complete(self) -> None:
-        LOG.info("Waiting for all tasks to complete...")
-
-        with self._cv:
-            self._stop = True
-            self._cv.notify_all()
-
-        self._tasks.join()
-
-        for worker in self._workers:
-            if worker.is_alive():
-                worker.join()
 
     def empty(self) -> bool:
         return self._tasks.empty()
@@ -96,8 +93,24 @@ class TaskScheduler:
     def get_waiting_task_count(self) -> int:
         return self._tasks.qsize()
 
-    def get_num_workers(self) -> int:
-        return self._num_workers
-
     def get_worker_count(self) -> int:
         return len(self._workers)
+
+    # ========== Private APIs (for internal usage) ==========
+
+    def _get(self) -> Task:
+        task = self._tasks.get()
+        LOG.info("Task with id: [%d] popped.", task.get_id())
+        return task
+
+
+class FIFOTaskScheduler(BaseTaskScheduler):
+    def __init__(self, num_workers: int, tasks: Optional[List[Task]] = None) -> None:
+        self._tasks = Queue()
+        super().__init__(num_workers=num_workers, tasks=tasks)
+
+
+class PriorityTaskScheduler(BaseTaskScheduler):
+    def __init__(self, num_workers: int, tasks: Optional[List[Task]] = None) -> None:
+        self._tasks = PriorityQueue()
+        super().__init__(num_workers=num_workers, tasks=tasks)

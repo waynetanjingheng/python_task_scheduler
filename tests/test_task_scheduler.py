@@ -1,5 +1,5 @@
 import pytest
-from src.scheduler import TaskScheduler
+from src.scheduler import FIFOTaskScheduler
 from src.tasks import Task
 from tests.mock import (
     mock_task_quick,
@@ -12,25 +12,24 @@ MUST_BE_GREATER_THAN_ZERO = "must be greater than 0"
 
 
 def test_initialize_with_valid_workers():
-    with TaskScheduler(num_workers=3) as scheduler:
-        assert scheduler.get_num_workers() == 3
+    with FIFOTaskScheduler(num_workers=3) as scheduler:
         assert scheduler.get_worker_count() == 3
 
 
 def test_initialize_with_zero_workers():
     with pytest.raises(ValueError, match=MUST_BE_GREATER_THAN_ZERO):
-        with TaskScheduler(num_workers=0):
+        with FIFOTaskScheduler(num_workers=0):
             pass
 
 
 def test_initialize_with_negative_workers():
     with pytest.raises(ValueError, match=MUST_BE_GREATER_THAN_ZERO):
-        with TaskScheduler(num_workers=-1):
+        with FIFOTaskScheduler(num_workers=-1):
             pass
 
 
 def test_schedule():
-    with TaskScheduler(num_workers=3) as scheduler:
+    with FIFOTaskScheduler(num_workers=3) as scheduler:
         mock_task = Task(id=1, task=mock_task_quick)
         scheduler.schedule(mock_task)
 
@@ -39,7 +38,7 @@ def test_schedule():
 
 @pytest.mark.parametrize("num_test_workers", list(range(1, 6)))
 def test_multiple_task_executions(num_test_workers: int):
-    with TaskScheduler(num_workers=num_test_workers) as scheduler:
+    with FIFOTaskScheduler(num_workers=num_test_workers) as scheduler:
         mock_tasks = [
             Task(id=1, task=mock_task_quick),
             Task(id=2, task=mock_task_with_computation),
@@ -50,5 +49,5 @@ def test_multiple_task_executions(num_test_workers: int):
         for mock_task in mock_tasks:
             scheduler.schedule(mock_task)
 
-        scheduler.wait_for_all_tasks_to_complete()
+        scheduler.stop()
         assert scheduler.empty()
