@@ -29,10 +29,10 @@ def test_initialize_with_negative_workers():
             pass
 
 
-def test_enqueue_task():
+def test_schedule():
     with TaskScheduler(num_workers=3) as scheduler:
         mock_task = Task(id=1, task=mock_task_quick)
-        scheduler.enqueue_task(mock_task)
+        scheduler.schedule(mock_task)
 
         assert scheduler.get_waiting_task_count() == 1
 
@@ -48,7 +48,7 @@ def test_multiple_task_executions(num_test_workers: int):
         ]
 
         for mock_task in mock_tasks:
-            scheduler.enqueue_task(mock_task)
+            scheduler.schedule(mock_task)
 
         scheduler.wait_for_all_tasks_to_complete()
         assert scheduler.empty()

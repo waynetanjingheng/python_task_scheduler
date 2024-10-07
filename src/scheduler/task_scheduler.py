@@ -26,7 +26,7 @@ class TaskScheduler:
 
         if tasks:
             for task in tasks:
-                self.enqueue_task(task)
+                self.schedule(task)
 
     def __enter__(self) -> Self:
         LOG.info("Entering TaskScheduler context...")
@@ -44,13 +44,13 @@ class TaskScheduler:
 
     def start(self) -> None:
         for _ in range(self._num_workers):
-            worker = threading.Thread(target=self.execute_tasks)
+            worker = threading.Thread(target=self.execute)
             worker.start()
             self._workers.append(worker)
 
         LOG.info("%d worker threads initialized.", self._num_workers)
 
-    def enqueue_task(self, task: Task) -> None:
+    def schedule(self, task: Task) -> None:
         with self._cv:
             self._tasks.put(task)
             LOG.info("Task with id: [%d] enqueued.", task.get_id())
@@ -61,7 +61,7 @@ class TaskScheduler:
         LOG.info("Task with id: [%d] popped.", task.get_id())
         return task
 
-    def execute_tasks(self) -> None:
+    def execute(self) -> None:
         while True:
             LOG.info("Thread polling...")
 
