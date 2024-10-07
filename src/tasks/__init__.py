@@ -1,3 +1,3 @@
-from .tasks import Task, PriorityTask
+from .task import Task, PriorityTask
 
 __all__ = ["Task", "PriorityTask"]

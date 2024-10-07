@@ -12,6 +12,12 @@ class Task:
     id: int
     task: Callable[[int], None]
 
+    def __post_init__(self) -> None:
+        LOG.info(
+            "Task created with id: [%d]",
+            self.id,
+        )
+
     def get_id(self) -> int:
         return self.id
 
@@ -21,10 +27,15 @@ class Task:
                 f"Task with id: [{self.id}] cannot be executed because it's task is None!"
             )
 
-        LOG.info(f"Executing Task with id: [{self.id}]")
+        LOG.info("Executing Task with id: [%d]", self.id)
         self.task(self.id)
 
 
+@dataclass
 class PriorityTask(PriorityMixin, Task):
-    def __init__(self, priority: int, *args, **kwargs) -> None:
-        super().__init__(priority, *args, **kwargs)
+    def __post_init__(self) -> None:
+        LOG.info(
+            "PriorityTask created with priority: [%d] and id: [%d]",
+            self.priority,
+            self.id,
+        )

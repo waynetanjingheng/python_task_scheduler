@@ -36,18 +36,18 @@ def test_schedule():
         assert scheduler.get_waiting_task_count() == 1
 
 
-@pytest.mark.parametrize("num_test_workers", list(range(1, 6)))
-def test_multiple_task_executions(num_test_workers: int):
-    with FIFOTaskScheduler(num_workers=num_test_workers) as scheduler:
-        mock_tasks = [
-            Task(id=1, task=mock_task_quick),
-            Task(id=2, task=mock_task_with_computation),
-            Task(id=3, task=mock_task_with_contrived_error),
-            Task(id=4, task=mock_task_with_random_sleep_duration),
-        ]
+@pytest.mark.parametrize("num_test_workers", list(range(1, 6, 2)))
+def test_fifo_order(num_test_workers: int):
+    mock_tasks = [
+        Task(id=1, task=mock_task_quick),
+        Task(id=2, task=mock_task_with_computation),
+        Task(id=3, task=mock_task_with_contrived_error),
+        Task(id=4, task=mock_task_with_random_sleep_duration),
+    ]
 
-        for mock_task in mock_tasks:
-            scheduler.schedule(mock_task)
-
+    with FIFOTaskScheduler(num_workers=num_test_workers, tasks=mock_tasks) as scheduler:
         scheduler.stop()
         assert scheduler.empty()
+
+        popped_tasks = scheduler.get_popped_tasks()
+        assert [task.get_id() for task in popped_tasks] == [1, 2, 3, 4]

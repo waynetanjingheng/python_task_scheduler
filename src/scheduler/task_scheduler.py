@@ -23,8 +23,11 @@ class BaseTaskScheduler(ABC):
         self._workers = []
         self._stop = False
         self._cv = threading.Condition()
+        self._popped_tasks = Queue()
+        self._lock = threading.Lock()
 
         if tasks:
+            LOG.info("%d tasks received in the constructor.", len(tasks))
             for task in tasks:
                 self.schedule(task)
 
@@ -83,7 +86,7 @@ class BaseTaskScheduler(ABC):
                     LOG.info("Thread has finished polling.")
                     return
 
-                task = self._get()
+                task = self._pop()
                 task.execute()
                 self._tasks.task_done()
 
@@ -96,11 +99,31 @@ class BaseTaskScheduler(ABC):
     def get_worker_count(self) -> int:
         return len(self._workers)
 
+    def get_popped_tasks(self) -> List[Task]:
+        """Returns a list of tasks in the order they were popped from the queue."""
+        tasks = []
+
+        # A lock ensures that other threads calling self._pop() does not mutate the Queue
+        # while this method is executing.
+        with self._lock:
+            while not self._popped_tasks.empty():
+                task = self._popped_tasks.get()
+                tasks.append(task)
+
+            for task in tasks:
+                self._popped_tasks.put(task)
+
+        return tasks
+
     # ========== Private APIs (for internal usage) ==========
 
-    def _get(self) -> Task:
+    def _pop(self) -> Task:
         task = self._tasks.get()
         LOG.info("Task with id: [%d] popped.", task.get_id())
+
+        with self._lock:
+            self._popped_tasks.put(task)
+
         return task
 
 
