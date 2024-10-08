@@ -1,7 +1,7 @@
 import pytest
 from src.scheduler import PriorityTaskScheduler
 from src.tasks import PriorityTask
-from tests.mock import (
+from src.mock import (
     mock_task_quick,
     mock_task_with_computation,
     mock_task_with_contrived_error,
