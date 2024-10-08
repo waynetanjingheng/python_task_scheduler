@@ -13,16 +13,19 @@ class UserOptions:
 
     @classmethod
     def display_options_and_accept_input(cls):
-        NUM_SCHEDULING_ALGORITHMS = 3
+        from src.factory import TaskAndSchedulerFactory
+
+        NUM_SCHEDULING_ALGORITHMS = TaskAndSchedulerFactory.get_num_types()
         LOG.info(
             f"Number of scheduling algorithms available: {NUM_SCHEDULING_ALGORITHMS}"
         )
 
         print("Welcome! Please select a scheduling algorithm:")
         print("=====================")
-        print("1: FIFO")
-        print("2: Priority")
-        print("3: Round Robiin")
+
+        for type_number, name in TaskAndSchedulerFactory.get_options():
+            print(f"{type_number}: {name}")
+
         print("=====================\n")
 
         try:

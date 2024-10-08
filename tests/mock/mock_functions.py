@@ -10,7 +10,7 @@ def mock_task_with_random_sleep_duration(task_id: int) -> None:
     if task_id is None:
         raise ValueError("task_id cannot be None!")
 
-    sleep_duration = random.randint(1, 5)
+    sleep_duration = random.randint(1, 3)
     LOG.info(
         "Sleeping Task with id: [%d] started, will take %d seconds.",
         task_id,
