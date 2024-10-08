@@ -1,7 +1,7 @@
 import pytest
 from src.scheduler import RoundRobinTaskScheduler
 from src.tasks import PausableTask
-from tests.mock import (
+from src.mock import (
     fibonacci,
 )
 
