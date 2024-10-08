@@ -1,5 +1,5 @@
 import logging
-from src.scheduler import TaskScheduler
+from src.view import UserOptions
 
 LOG = logging.getLogger("src")
 
@@ -7,8 +7,7 @@ LOG = logging.getLogger("src")
 def main() -> None:
     LOG.info("Starting Program...")
 
-    with TaskScheduler(4) as task_scheduler:
-        LOG.info("In task scheduler. Should not exit yet.")
+    UserOptions.display_options_and_accept_input()
 
     LOG.info("Program exiting!")
 
