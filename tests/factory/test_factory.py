@@ -16,6 +16,7 @@ def setup_and_teardown():
     yield
     UserOptions.type = None
     UserOptions.num_workers = None
+    UserOptions.time_quantum_ms = None
 
 
 @pytest.fixture
@@ -31,6 +32,7 @@ def priority_scheduler_option():
 @pytest.fixture
 def round_robin_scheduler_option():
     UserOptions.type = 3
+    UserOptions.time_quantum_ms = 20
 
 
 @pytest.fixture
